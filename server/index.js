@@ -25,14 +25,17 @@ app.route('/articles')
         ax.get('/articles')
             .then(response => {
                 res.json(response.data);
+            })
+            .catch(error => {
+                res.sendStatus(error.response.status);
             });
     })
     .post(jsonParser, function(req, res) {
-        if (req.body.title && req.body.content && req.body.author) {
+        if (req.body.title && req.body.content && req.body.createdAt && req.body.author) {
             ax.post('/articles', {
                 title: req.body.title,
                 content: req.body.content,
-                created_at : new Date(),
+                created_at : req.body.createdAt,
                 author: req.body.author
             })
                 .then(response => {
@@ -49,11 +52,13 @@ app.route('/articles')
 
 app.route('/articles/:id')
     .get(function(req, res) {
-        const query = `q={ "id": ${req.params.id} }`;
-        ax.get(`/articles?${query}`)
+        ax.get(`/articles/${req.params.id}`)
             .then(response => {
                 res.json(response.data);
-            });
+            })
+            .catch(error => {
+                res.sendStatus(error.response.status);
+            })
     })
     .put(jsonParser, function(req, res) {
         if (req.body.title && req.body.content && req.body.createdAt && req.body.author) {
@@ -75,10 +80,12 @@ app.route('/articles/:id')
         res.sendStatus(400);
     })
     .delete(function(req, res) {
-        const query = `q={ "id": ${req.params.id} }`;
-        ax.delete(`/articles/*?${query}`)
+        ax.delete(`/articles/${req.params.id}`)
             .then(response => {
                 res.json(response.data);
+            })
+            .catch(error => {
+                res.sendStatus(error.response.status);
             });
     });
 
