@@ -1,4 +1,5 @@
 const axios = require('axios');
+const bodyParser = require('body-parser');
 const express = require('express');
 
 const DB_HOST = 'https://blogjsgrauwinm-7d7b.restdb.io/rest';
@@ -13,6 +14,7 @@ const ax = axios.create({
         'x-api-key': DB_API_KEY,
     },
 });
+const jsonParser = bodyParser.json();
 
 app.get('/', (req, res) => {
     res.json('Hello from server');
@@ -25,8 +27,24 @@ app.route('/articles')
                 res.json(response.data);
             });
     })
-    .post(function(req, res) {
-        res.json('TODO : ajouter un article');
+    .post(jsonParser, function(req, res) {
+        if (req.body.title && req.body.content && req.body.author) {
+            ax.post('/articles', {
+                title: req.body.title,
+                content: req.body.content,
+                created_at : new Date(),
+                author: req.body.author
+            })
+                .then(response => {
+                    res.sendStatus(response.status);
+                })
+                .catch(error => {
+                    res.sendStatus(error.response.status);
+                });
+
+            return;
+        }
+        res.sendStatus(400);
     });
 
 app.route('/articles/:id')
