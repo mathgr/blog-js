@@ -104,8 +104,25 @@ app.post('/create_account', jsonParser, function(req, res) {
     res.sendStatus(400);
 });
 
-app.post('/login_check', function(req, res) {
-   res.json('TO DO : se connecter');
+app.post('/login', jsonParser, function(req, res) {
+   if (req.body.email && req.body.password) {
+       const query = `q={"email":"${req.body.email}"}`;
+       axiosDB.get(`/members?${query}`)
+           .then(response => {
+               const member = response.data[0];
+               if (typeof member !== 'undefined' && member.password === req.body.password) {
+                   res.send('TODO : Generate JWT');
+               } else {
+                   res.sendStatus(401);
+               }
+           })
+           .catch(error => {
+               res.send(error.response.status);
+           });
+
+       return;
+   }
+   res.sendStatus(400);
 });
 
 app.listen(process.env.PORT, () => {
