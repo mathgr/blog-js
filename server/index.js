@@ -55,8 +55,24 @@ app.route('/articles/:id')
                 res.json(response.data);
             });
     })
-    .put(function(req, res) {
-        res.json('TODO : mettre à jour l\'article ' + req.params.id);
+    .put(jsonParser, function(req, res) {
+        if (req.body.title && req.body.content && req.body.createdAt && req.body.author) {
+            ax.put(`/articles/${req.params.id}`, {
+                title: req.body.title,
+                content: req.body.content,
+                created_at: req.body.createdAt,
+                author: req.body.author
+            })
+                .then(response => {
+                    res.sendStatus(response.status);
+                })
+                .catch(error => {
+                    res.sendStatus(error.response.status);
+                });
+
+            return;
+        }
+        res.sendStatus(400);
     })
     .delete(function(req, res) {
         const query = `q={ "id": ${req.params.id} }`;
