@@ -15,7 +15,7 @@ const ax = axios.create({
 });
 
 app.get('/', (req, res) => {
-    res.json('Hello from back');
+    res.json('Hello from server');
 });
 
 app.route('/articles')
