@@ -86,8 +86,22 @@ app.route('/articles/:id')
             });
     });
 
-app.post('/create_account', function(req, res) {
-   res.json('TO DO : créer un compte');
+app.post('/create_account', jsonParser, function(req, res) {
+    if (req.body.email && req.body.password) {
+        axiosDB.post('/members', {
+            email: req.body.email,
+            password: req.body.password
+        })
+            .then(response => {
+                res.sendStatus(response.status);
+            })
+            .catch(error => {
+                res.sendStatus(error.response.status);
+            });
+
+        return;
+    }
+    res.sendStatus(400);
 });
 
 app.post('/login_check', function(req, res) {
