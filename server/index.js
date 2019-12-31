@@ -51,7 +51,11 @@ app.route('/articles/:id')
     .get(function(req, res) {
         axiosDB.get(`/articles/${req.params.id}`)
             .then(response => {
-                res.json(response.data);
+                if (response.data.length !== 0) {
+                    res.json(response.data);
+                } else {
+                    res.sendStatus(404);
+                }
             })
             .catch(error => {
                 res.sendStatus(error.response.status);
@@ -79,7 +83,7 @@ app.route('/articles/:id')
     .delete(function(req, res) {
         axiosDB.delete(`/articles/${req.params.id}`)
             .then(response => {
-                res.json(response.data);
+                res.sendStatus(response.status);
             })
             .catch(error => {
                 res.sendStatus(error.response.status);
