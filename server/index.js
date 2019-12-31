@@ -110,8 +110,10 @@ app.post('/create_account', jsonParser, function(req, res) {
 
 app.post('/login', jsonParser, function(req, res) {
    if (req.body.email && req.body.password) {
-       const query = `q={"email":"${req.body.email}"}`;
-       axiosDB.get(`/members?${query}`)
+       const queryString = JSON.stringify({
+           email: req.body.email,
+       });
+       axiosDB.get(`/members?q=${queryString}`)
            .then(response => {
                const member = response.data[0];
                if (typeof member !== 'undefined' && member.password === req.body.password) {
