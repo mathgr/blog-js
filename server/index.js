@@ -2,6 +2,9 @@ require('dotenv').config();
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const passportJWT = require('passport-jwt');
 
 const app = express();
 const axiosDB = axios.create({
@@ -12,6 +15,27 @@ const axiosDB = axios.create({
     },
 });
 const jsonParser = bodyParser.json();
+const secret = process.env.JWT_SECRET;
+const jwtOptions = {
+    jwtFromRequest: passportJWT.ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: secret,
+};
+
+passport.use(new passportJWT.Strategy(jwtOptions, function (payload, next) {
+    const queryString = JSON.stringify({
+        email: payload.email,
+    });
+    axiosDB.get(`/members?q=${queryString}`)
+        .then(response => {
+            const member = response.data[0];
+            if (typeof member !== 'undefined') {
+                next(null, member);
+            } else {
+                next(null, false);
+            }
+        })
+        .catch(error => next(null, false));
+}));
 
 app.get('/', (req, res) => {
     res.json('Hello from server');
@@ -117,7 +141,10 @@ app.post('/login', jsonParser, function(req, res) {
            .then(response => {
                const member = response.data[0];
                if (typeof member !== 'undefined' && member.password === req.body.password) {
-                   res.send('TODO : Generate JWT');
+                   const userJwt = jwt.sign({
+                       member: member.email
+                   }, secret);
+                   res.json({jwt: userJwt});
                } else {
                    res.sendStatus(401);
                }
