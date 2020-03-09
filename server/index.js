@@ -22,9 +22,16 @@ const jwtOptions = {
 };
 
 passport.use(new passportJWT.Strategy(jwtOptions, function (payload, next) {
+    if (!payload.member_email) {
+        next(null, false);
+
+        return;
+    }
+
     const queryString = JSON.stringify({
-        email: payload.email,
+        email: payload.member_email,
     });
+
     axiosDB.get(`/members?q=${queryString}`)
         .then(response => {
             const member = response.data[0];
@@ -51,13 +58,19 @@ app.route('/articles')
                 res.sendStatus(error.response.status);
             });
     })
-    .post(jsonParser, function(req, res) {
-        if (req.body.title && req.body.content && req.body.createdAt && req.body.author) {
+    .post(jsonParser, passport.authenticate('jwt', { session: false }), function(req, res) {
+        if (!req.user.email) {
+            res.sendStatus(401);
+
+            return;
+        }
+
+        if (req.body.title && req.body.content) {
             axiosDB.post('/articles', {
                 title: req.body.title,
                 content: req.body.content,
-                created_at : req.body.createdAt,
-                author: req.body.author
+                created_at : new Date(),
+                author: req.user.email
             })
                 .then(response => {
                     res.sendStatus(response.status);
@@ -142,7 +155,7 @@ app.post('/login', jsonParser, function(req, res) {
                const member = response.data[0];
                if (typeof member !== 'undefined' && member.password === req.body.password) {
                    const userJwt = jwt.sign({
-                       member: member.email
+                       member_email: member.email
                    }, secret);
                    res.json({jwt: userJwt});
                } else {
