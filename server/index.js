@@ -98,33 +98,52 @@ app.route('/articles/:id')
                 res.sendStatus(error.response.status);
             })
     })
-    .put(jsonParser, function(req, res) {
-        if (req.body.title && req.body.content && req.body.createdAt && req.body.author) {
-            axiosDB.put(`/articles/${req.params.id}`, {
-                title: req.body.title,
-                content: req.body.content,
-                created_at: req.body.createdAt,
-                author: req.body.author
-            })
-                .then(response => {
-                    res.sendStatus(response.status);
-                })
-                .catch(error => {
-                    res.sendStatus(error.response.status);
+    .put(jsonParser, passport.authenticate('jwt', { session: false }), function(req, res) {
+        if (req.body.title && req.body.content) {
+            articleBelongToMember(req.params.id, req.user.email)
+                .then(isValid => {
+                    if (!isValid) {
+                        res.sendStatus(401);
+
+                        return;
+                    }
+
+                    axiosDB.put(`/articles/${req.params.id}`, {
+                        title: req.body.title,
+                        content: req.body.content,
+                        created_at: new Date(),
+                        author: req.user.email,
+                    })
+                        .then(response => {
+                            res.sendStatus(response.status);
+                        })
+                        .catch(error => {
+                            console.log(error);
+                            res.sendStatus(error.response.status);
+                        });
                 });
 
             return;
         }
         res.sendStatus(400);
     })
-    .delete(function(req, res) {
-        axiosDB.delete(`/articles/${req.params.id}`)
-            .then(response => {
-                res.sendStatus(response.status);
+    .delete(passport.authenticate('jwt', { session: false }), function(req, res) {
+        articleBelongToMember(req.params.id, req.user.email)
+            .then(isValid => {
+                if (!isValid) {
+                    res.sendStatus(401);
+
+                    return;
+                }
+
+                axiosDB.delete(`/articles/${req.params.id}`)
+                    .then(response => {
+                        res.sendStatus(response.status);
+                    })
+                    .catch(error => {
+                        res.sendStatus(error.response.status);
+                    });
             })
-            .catch(error => {
-                res.sendStatus(error.response.status);
-            });
     });
 
 app.post('/create_account', jsonParser, function(req, res) {
@@ -174,3 +193,15 @@ app.post('/login', jsonParser, function(req, res) {
 app.listen(process.env.PORT, () => {
     console.log('App listening on ' + process.env.PORT);
 });
+
+async function articleBelongToMember(uuidArticle, emailMember) {
+    const response  = await axiosDB.get(`/articles/${uuidArticle}`);
+
+    if (response.data.length === 0) {
+        return false;
+    }
+
+    const article = response.data;
+
+    return article.author === emailMember;
+}
