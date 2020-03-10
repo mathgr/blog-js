@@ -146,6 +146,37 @@ app.route('/articles/:id')
             })
     });
 
+app.get('/articles/members/:id', function(req, res) {
+    axiosDB.get(`/members/${req.params.id}`)
+        .then(response => {
+            if (response.data.length === 0) {
+                res.sendStatus(404);
+
+                return;
+            }
+
+            const emailAuthor = response.data.email;
+
+            const queryString = JSON.stringify({
+                author: emailAuthor,
+            });
+
+            axiosDB.get(`/articles?q=${queryString}`)
+                .then(response => {
+                    if (response.data.length === 0) {
+                        res.sendStatus(404);
+
+                        return;
+                    }
+
+                    res.json(response.data);
+                })
+                .catch(error => {
+                    res.sendStatus(error.response.status);
+                });
+        });
+});
+
 app.post('/create_account', jsonParser, function(req, res) {
     if (req.body.email && req.body.password) {
         axiosDB.post('/members', {
