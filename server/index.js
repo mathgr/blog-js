@@ -21,27 +21,22 @@ const jwtOptions = {
     secretOrKey: secret,
 };
 
-passport.use(new passportJWT.Strategy(jwtOptions, function (payload, next) {
+passport.use(new passportJWT.Strategy(jwtOptions, async function (payload, next) {
     if (!payload.member_email) {
         next(null, false);
 
         return;
     }
 
-    const queryString = JSON.stringify({
-        email: payload.member_email,
-    });
+    const member = await getMemberByEmail(payload.member_email);
 
-    axiosDB.get(`/members?q=${queryString}`)
-        .then(response => {
-            const member = response.data[0];
-            if (typeof member !== 'undefined') {
-                next(null, member);
-            } else {
-                next(null, false);
-            }
-        })
-        .catch(error => next(null, false));
+    if (!member) {
+        next(null, false);
+
+        return;
+    }
+
+    next(null, member);
 }));
 
 app.get('/', (req, res) => {
@@ -49,35 +44,29 @@ app.get('/', (req, res) => {
 });
 
 app.route('/articles')
-    .get(function(req, res) {
-        axiosDB.get('/articles')
-            .then(response => {
-                res.json(response.data);
-            })
-            .catch(error => {
-                res.sendStatus(error.response.status);
-            });
-    })
-    .post(jsonParser, passport.authenticate('jwt', { session: false }), function(req, res) {
-        if (!req.user.email) {
-            res.sendStatus(401);
+    .get(async function(req, res) {
+        try {
+            const responseArticles = await axiosDB.get('/articles');
 
-            return;
+            res.json(responseArticles.data);
+        } catch (error) {
+            res.sendStatus(error.response.status);
         }
-
+    })
+    .post(jsonParser, passport.authenticate('jwt', { session: false }), async function(req, res) {
         if (req.body.title && req.body.content) {
-            axiosDB.post('/articles', {
-                title: req.body.title,
-                content: req.body.content,
-                created_at : new Date(),
-                author: req.user.email
-            })
-                .then(response => {
-                    res.sendStatus(response.status);
-                })
-                .catch(error => {
-                    res.sendStatus(error.response.status);
+            try {
+                const responseArticle = await axiosDB.post('/articles', {
+                    title: req.body.title,
+                    content: req.body.content,
+                    created_at : new Date(),
+                    author: req.user.email,
                 });
+
+                res.sendStatus(responseArticle.status);
+            } catch (error) {
+                res.sendStatus(error.response.status);
+            }
 
             return;
         }
@@ -85,136 +74,144 @@ app.route('/articles')
     });
 
 app.route('/articles/:id')
-    .get(function(req, res) {
-        axiosDB.get(`/articles/${req.params.id}`)
-            .then(response => {
-                if (response.data.length !== 0) {
-                    res.json(response.data);
-                } else {
-                    res.sendStatus(404);
-                }
-            })
-            .catch(error => {
-                res.sendStatus(error.response.status);
-            })
-    })
-    .put(jsonParser, passport.authenticate('jwt', { session: false }), function(req, res) {
-        if (req.body.title && req.body.content) {
-            articleBelongToMember(req.params.id, req.user.email)
-                .then(isValid => {
-                    if (!isValid) {
-                        res.sendStatus(401);
+    .get(async function(req, res) {
+        try {
+            const article = await getArticleById(req.params.id);
 
-                        return;
-                    }
-
-                    axiosDB.put(`/articles/${req.params.id}`, {
-                        title: req.body.title,
-                        content: req.body.content,
-                        created_at: new Date(),
-                        author: req.user.email,
-                    })
-                        .then(response => {
-                            res.sendStatus(response.status);
-                        })
-                        .catch(error => {
-                            console.log(error);
-                            res.sendStatus(error.response.status);
-                        });
-                });
-
-            return;
-        }
-        res.sendStatus(400);
-    })
-    .delete(passport.authenticate('jwt', { session: false }), function(req, res) {
-        articleBelongToMember(req.params.id, req.user.email)
-            .then(isValid => {
-                if (!isValid) {
-                    res.sendStatus(401);
-
-                    return;
-                }
-
-                axiosDB.delete(`/articles/${req.params.id}`)
-                    .then(response => {
-                        res.sendStatus(response.status);
-                    })
-                    .catch(error => {
-                        res.sendStatus(error.response.status);
-                    });
-            })
-    });
-
-app.get('/articles/members/:id', function(req, res) {
-    axiosDB.get(`/members/${req.params.id}`)
-        .then(response => {
-            if (response.data.length === 0) {
+            if (!article) {
                 res.sendStatus(404);
 
                 return;
             }
 
-            const emailAuthor = response.data.email;
+            res.json(article);
+        } catch (error) {
+            res.sendStatus(error.response.status);
+        }
+    })
+    .put(jsonParser, passport.authenticate('jwt', { session: false }), async function(req, res) {
+        if (req.body.title && req.body.content) {
+            try {
+                const article = await getArticleById(req.params.id);
 
-            const queryString = JSON.stringify({
-                author: emailAuthor,
-            });
+                if (!article) {
+                    res.sendStatus(404);
 
-            axiosDB.get(`/articles?q=${queryString}`)
-                .then(response => {
-                    if (response.data.length === 0) {
-                        res.sendStatus(404);
+                    return;
+                }
 
-                        return;
-                    }
+                if (article.author !== req.user.email) {
+                    res.sendStatus(401);
 
-                    res.json(response.data);
-                })
-                .catch(error => {
-                    res.sendStatus(error.response.status);
+                    return;
+                }
+
+                const responseArticle = await axiosDB.put(`/articles/${article._id}`, {
+                    title: req.body.title,
+                    content: req.body.content,
+                    created_at: article.created_at,
+                    author: article.author,
                 });
+
+                res.sendStatus(responseArticle.status);
+            } catch (error) {
+                res.sendStatus(error.response.status);
+            }
+
+            return;
+        }
+        res.sendStatus(400);
+    })
+    .delete(passport.authenticate('jwt', { session: false }), async function(req, res) {
+        try {
+            const article = await getArticleById(req.params.id);
+
+            if (!article) {
+                res.sendStatus(404);
+
+                return;
+            }
+
+            if (article.author !== req.user.email) {
+                res.sendStatus(401);
+
+                return;
+            }
+
+            const responseArticle = await axiosDB.delete(`/articles/${article._id}`);
+
+            res.sendStatus(responseArticle.status);
+        } catch (error) {
+            res.sendStatus(error.response.status);
+        }
+    });
+
+app.get('/articles/members/:id', async function(req, res) {
+    try {
+        const responseMember = await axiosDB.get(`/members/${req.params.id}`);
+
+        if(responseMember.data.length === 0) {
+            res.sendStatus(404);
+
+            return;
+        }
+
+        const queryString = JSON.stringify({
+            author: responseMember.data.email,
         });
+
+        const responseArticle = await axiosDB.get(`/articles?q=${queryString}`);
+
+        if (responseArticle.data.length === 0) {
+            res.sendStatus(404);
+
+            return;
+        }
+
+        res.json(responseArticle.data);
+    } catch (error) {
+        res.sendStatus(error.response.status);
+    }
 });
 
-app.post('/create_account', jsonParser, function(req, res) {
+app.post('/create_account', jsonParser, async function(req, res) {
     if (req.body.email && req.body.password) {
-        axiosDB.post('/members', {
-            email: req.body.email,
-            password: req.body.password
-        })
-            .then(response => {
-                res.sendStatus(response.status);
-            })
-            .catch(error => {
-                res.sendStatus(error.response.status);
+        try {
+            const responseMember = await axiosDB.post('/members', {
+                email: req.body.email,
+                password: req.body.password,
             });
+
+            res.sendStatus(responseMember.status);
+        } catch (error) {
+            res.sendStatus(error.response.status);
+        }
 
         return;
     }
     res.sendStatus(400);
 });
 
-app.post('/login', jsonParser, function(req, res) {
+app.post('/login', jsonParser, async function(req, res) {
    if (req.body.email && req.body.password) {
-       const queryString = JSON.stringify({
-           email: req.body.email,
-       });
-       axiosDB.get(`/members?q=${queryString}`)
-           .then(response => {
-               const member = response.data[0];
-               if (typeof member !== 'undefined' && member.password === req.body.password) {
-                   const userJwt = jwt.sign({
-                       member_email: member.email
-                   }, secret);
-                   res.json({jwt: userJwt});
-               } else {
-                   res.sendStatus(401);
-               }
-           })
-           .catch(error => {
-               res.send(error.response.status);
-           });
+       try {
+           const member = await getMemberByEmail(req.body.email);
+
+           if (!member || member.password !== req.body.password) {
+               res.sendStatus(401);
+
+               return;
+           }
+
+           const jwtUser = jwt.sign({
+               member_id: member._id,
+               member_email: member.email,
+           }, secret);
+
+           res.json({jwt: jwtUser});
+       } catch (error) {
+           res.sendStatus(error.response.status);
+       }
 
        return;
    }
@@ -225,14 +222,26 @@ app.listen(process.env.PORT, () => {
     console.log('App listening on ' + process.env.PORT);
 });
 
-async function articleBelongToMember(uuidArticle, emailMember) {
-    const response  = await axiosDB.get(`/articles/${uuidArticle}`);
+async function getArticleById(id) {
+    const responseArticle = await axiosDB.get(`/articles/${id}`);
 
-    if (response.data.length === 0) {
-        return false;
+    if (responseArticle.data.length === 0) {
+        return null;
     }
 
-    const article = response.data;
+    return responseArticle.data;
+}
 
-    return article.author === emailMember;
+async function getMemberByEmail(email) {
+    const queryString = JSON.stringify({
+        email: email,
+    });
+
+    const responseMember = await axiosDB.get(`/members?q=${queryString}`);
+
+    if (responseMember.data.length === 0) {
+        return null;
+    }
+
+    return responseMember.data[0];
 }
