@@ -1,12 +1,14 @@
 require('dotenv').config();
 const axios = require('axios');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const passportJWT = require('passport-jwt');
 
 const app = express();
+app.use(cors());
 const axiosDB = axios.create({
     baseURL: process.env.DB_HOST,
     headers: {
