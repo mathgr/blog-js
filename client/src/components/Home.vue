@@ -1,14 +1,9 @@
 <template>
-    <div>
-        <ListArticles></ListArticles>
-    </div>
+    <router-view></router-view>
 </template>
 
 <script>
-    import ListArticles from "./article/ListArticles";
-
     export default {
-        name: "Home",
-        components: {ListArticles},
+        name: 'Home',
     }
 </script>
