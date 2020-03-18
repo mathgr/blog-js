@@ -7,7 +7,7 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
-                    <a class="nav-item nav-link" href="#">Accueil<span class="sr-only">(current)</span></a>
+                    <router-link to="/" class="nav-item nav-link">Accueil<span class="sr-only">(current)</span></router-link>
                     <a class="nav-item nav-link" href="#">Mes articles</a>
                     <a class="nav-item nav-link" href="#">Connexion</a>
                 </div>
