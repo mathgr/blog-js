@@ -1,5 +1,5 @@
 <template>
-    <footer class="blog-footer text-center">
+    <footer class="footer text-center">
         <p>Simple blog built by Mathieu Grauwin</p>
         <p>
             <a href="#">Back to top</a>
