@@ -1,10 +1,10 @@
 <template>
     <div v-if="article" class="col">
         <h2>{{ article.title }}</h2>
-        <p>{{ article.created_at }} by <a href="#">{{ article.author }}</a></p>
-        <div>
+        <p>Publié le {{ createdAtFormatted }} par <a :href="'mailto:' + article.author">{{ article.author }}</a></p>
+        <p>
             {{ article.content }}
-        </div>
+        </p>
     </div>
 </template>
 
@@ -22,6 +22,13 @@
             axios.get(this.$api_url + `/articles/${this.$route.params.id}`)
             .then(response => this.article = response.data)
             .catch(error => console.log(error));
+        },
+        computed: {
+            createdAtFormatted: function () {
+                const d = new Date(this.article.created_at);
+
+                return d.getDate() + ' ' + d.toLocaleString('default', {month: 'long'}) + ' ' + d.getFullYear();
+            }
         }
     }
 </script>
