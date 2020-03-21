@@ -3,7 +3,7 @@ import VueRouter from 'vue-router';
 import App from "./App.vue";
 import 'bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import ListArticles from "./components/article/ListArticles";
+import ListArticles from "./components/article/ArticlesList";
 import Article from "./components/article/Article";
 
 Vue.config.productionTip = false;
