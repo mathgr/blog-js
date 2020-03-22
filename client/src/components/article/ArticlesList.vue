@@ -1,7 +1,7 @@
 <template>
     <div class="row row-cols-1 row-cols-md-3">
         <div v-for="article in articles" :key="article._id" class="col mb-4">
-            <ArticleCard :article="article"></ArticleCard>
+            <ArticleCard :article="article" :is-editable="false"></ArticleCard>
         </div>
     </div>
 </template>
@@ -11,7 +11,7 @@
     import ArticleCard from "./ArticleCard";
 
     export default {
-        name: "ListArticles",
+        name: "ArticlesList",
         components: {ArticleCard},
         data() {
             return {
