@@ -1,11 +1,14 @@
 import Vue from "vue";
 import VueRouter from 'vue-router';
 import Vuex from 'vuex';
-import App from "./App.vue";
+
 import 'bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import ListArticles from "./components/article/ArticlesList";
+
+import App from "./App.vue";
 import Article from "./components/article/Article";
+import ArticlesList from "./components/article/ArticlesList";
+import ArticlesListMember from "./components/article/ArticlesListMember";
 import Login from "./components/member/Login";
 
 Vue.config.productionTip = false;
@@ -18,7 +21,7 @@ Vue.use(Vuex);
 const routes = [
   {
     path: '/',
-    component: ListArticles,
+    component: ArticlesList,
     name: 'home',
   },
   {
@@ -37,8 +40,21 @@ const routes = [
       }
 
       next();
-    }
+    },
   },
+  {
+    path: '/mes-articles',
+    component: ArticlesListMember,
+    name: 'my-articles',
+    beforeEnter: (to, from, next) => {
+      if (!store.getters.isLoggedIn) {
+        next({name: 'login'});
+        return;
+      }
+
+      next();
+    },
+  }
 ];
 const router = new VueRouter({
   routes,
@@ -52,8 +68,8 @@ const store = new Vuex.Store({
     isLoggedIn: state => {
       return state.jwtFromRequest !== null
     },
-    userId: state => {
-      if (!this.isLoggedIn(state)) {
+    memberId: state => {
+      if (state.jwtFromRequest === null) {
         return null;
       }
 

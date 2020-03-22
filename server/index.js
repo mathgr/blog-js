@@ -164,12 +164,6 @@ app.get('/articles/members/:id', async function(req, res) {
 
         const responseArticle = await axiosDB.get(`/articles?q=${queryString}`);
 
-        if (responseArticle.data.length === 0) {
-            res.sendStatus(404);
-
-            return;
-        }
-
         res.json(responseArticle.data);
     } catch (error) {
         res.sendStatus(error.response.status);
