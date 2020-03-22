@@ -1,5 +1,6 @@
 <template>
     <div>
+        <h2>Mes articles</h2>
         <div class="d-flex justify-content-end my-3">
             <router-link :to="{name: 'new-article'}" class="btn btn-primary">Créer un article</router-link>
         </div>
