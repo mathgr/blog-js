@@ -50,10 +50,10 @@
                 });
             },
             checkForm: function () {
-                if (this.email && this.email !== '' && this.password && this.password !== '') {
-                    this.isEmailInvalid = false;
-                    this.isPasswordInvalid = false;
+                this.isEmailInvalid = false;
+                this.isPasswordInvalid = false;
 
+                if (this.email && this.email !== '' && this.password && this.password !== '') {
                     return true;
                 }
 
