@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="d-flex justify-content-end my-3">
-            <button class="btn btn-primary">Créer un article</button>
+            <router-link :to="{name: 'new-article'}" class="btn btn-primary">Créer un article</router-link>
         </div>
         <div v-if="isLoaded">
             <div v-if="articlesMember.length" class="row row-cols-1 row-cols-md-3">

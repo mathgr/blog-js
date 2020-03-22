@@ -6,7 +6,7 @@
             <p class="card-text">{{ contentAbstract }}</p>
             <div class="btn-group">
                 <router-link :to="{name: 'article', params: {id: article._id}}" class="btn btn-primary">Voir plus</router-link>
-                <button v-if="isEditable" type="button" class="btn btn-secondary">Éditer</button>
+                <router-link :to="{name: 'edit-article', params: {id: article._id}}" v-if="isEditable" type="button" class="btn btn-secondary">Éditer</router-link>
                 <button v-if="isEditable" v-on:click="deleteArticle" type="button" class="btn btn-danger">Supprimer</button>
             </div>
         </div>
