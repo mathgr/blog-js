@@ -19,7 +19,7 @@
             }
         },
         created() {
-            axios.get(this.$api_url + '/articles')
+            axios.get(`${this.$api_url}/articles`)
             .then(response => this.articles = response.data)
             .catch(error => console.log(error));
         },
