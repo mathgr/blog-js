@@ -8,8 +8,9 @@
             <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
                 <div class="navbar-nav">
                     <router-link to="/" class="nav-item nav-link">Accueil<span class="sr-only">(current)</span></router-link>
-                    <a class="nav-item nav-link" href="#">Mes articles</a>
-                    <a class="nav-item nav-link" href="#">Connexion</a>
+                    <a v-if="$store.getters.isLoggedIn" class="nav-item nav-link" href="#">Mes articles</a>
+                    <router-link to="/identification" v-if="!$store.getters.isLoggedIn" class="nav-item nav-link">Connexion</router-link>
+                    <a v-if="$store.getters.isLoggedIn" v-on:click="logout" class="nav-item nav-link">Deconnexion</a>
                 </div>
             </div>
         </nav>
@@ -19,5 +20,11 @@
 <script>
 export default {
     name: "Header",
+    methods: {
+        logout: function () {
+            this.$store.state.jwtFromRequest = null;
+            this.$router.push({name: 'home'});
+        }
+    }
 }
 </script>
