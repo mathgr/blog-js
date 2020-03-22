@@ -11,6 +11,7 @@ import ArticlesList from "./components/article/ArticlesList";
 import ArticlesListMember from "./components/article/ArticlesListMember";
 import Login from "./components/member/Login";
 import ArticleCreateOrEdit from "./components/article/ArticleCreateOrEdit";
+import CreateAccount from "./components/member/CreateAccount";
 
 Vue.config.productionTip = false;
 
@@ -24,15 +25,27 @@ const mustBeAuthenticated = function (to, from, next) {
     next({name: 'login'});
     return;
   }
-
   next();
 };
+
+const mustNotBeAuthenticated = function (to, from, next) {
+  if (store.getters.isLoggedIn) {
+    next(false);
+    return;
+  }
+  next();
+}
 
 const routes = [
   {
     path: '/',
     component: ArticlesList,
     name: 'home',
+  },
+  {
+    path: '/articles/:id',
+    component: Article,
+    name: 'article',
   },
   {
     path: '/articles/nouveau',
@@ -53,28 +66,22 @@ const routes = [
     beforeEnter: mustBeAuthenticated,
   },
   {
-    path: '/articles/:id',
-    component: Article,
-    name: 'article',
+    path: '/mes-articles',
+    component: ArticlesListMember,
+    name: 'my-articles',
+    beforeEnter: mustBeAuthenticated,
   },
   {
     path: '/identification',
     component: Login,
     name: 'login',
-    beforeEnter: (to, from, next) => {
-      if (store.getters.isLoggedIn) {
-        next(false);
-        return;
-      }
-
-      next();
-    },
+    beforeEnter: mustNotBeAuthenticated,
   },
   {
-    path: '/mes-articles',
-    component: ArticlesListMember,
-    name: 'my-articles',
-    beforeEnter: mustBeAuthenticated,
+    path: '/creer-mon-compte',
+    component: CreateAccount,
+    name: 'create-account',
+    beforeEnter: mustNotBeAuthenticated,
   },
 ];
 const router = new VueRouter({
